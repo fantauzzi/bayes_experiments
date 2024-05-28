@@ -1,0 +1,77 @@
+```{r}
+library('ggplot2')
+library('rethinking')
+```
+
+```{r}
+inferences_from_tosses = function(water_count, total_count, n_points=50, prior = rep(1, n_points)) {
+  # Define grid
+  p_grid = seq(from=0, to=1, length.out=n_points)
+  
+  
+  # Compute likelihood at each value in grid
+  likelihood = dbinom(water_count, size=total_count, prob=p_grid)
+  
+  # Compute the unstandardized posterior (product of likelihood and prior)
+  unstd.posterior = likelihood * prior
+  
+  # Standardize the posterior to make it sum it up to 1
+  posterior = unstd.posterior/sum(unstd.posterior)
+  return(list(p_grid=p_grid, prior=prior, likelihood=likelihood, posterior=posterior))
+}
+```
+
+```{r}
+plot_bayesian_inference = function(inference) {
+  df = data.frame(inference$p_grid, inference$prior, inference$likelihood, inference$posterior)
+  
+  the_plot = ggplot(df, aes(x = inference$p_grid)) +
+    # Prior plot
+    geom_point(aes(y = inference$prior), color = "blue") +
+    geom_line(aes(y = inference$prior), color = "blue", linewidth = 1) +
+    # Likelihood plot with secondary axis
+    geom_point(aes(y = inference$likelihood), color = "red") +
+    geom_line(aes(y = inference$likelihood),
+              color = "red",
+              linewidth = 1) +
+    # Posterior plot
+    geom_point(aes(y = inference$posterior), color = "green") +
+    geom_line(aes(y = inference$posterior),
+              color = "green",
+              linewidth = 1) +
+    # Secondary axis for likelihood
+    scale_y_continuous(name = "Prior and Posterior",
+                       sec.axis = sec_axis(~ ., name = "Likelihood")) +
+    # Labels and theme
+    labs(x = "p_grid", y = "Density") +
+    theme_minimal() +
+    theme(
+      axis.title.y.right = element_text(color = "red"),
+      axis.text.y.right = element_text(color = "red")
+    )
+  return(the_plot)
+}
+```
+
+```{r}
+# Define prior
+# prior = rep(1, n_points)
+# prior = ifelse(p_grid<0.5, 0, 1)
+# prior = exp(-5*abs(p_grid-0.5))
+# prior = dbeta(p_grid, 5, 5)
+
+inference = inferences_from_tosses(3, 3)
+the_plot = plot_bayesian_inference(inference)
+the_plot
+```
+
+```{r}
+inference = inferences_from_tosses(3, 4)
+plot_bayesian_inference(inference)
+```
+
+```{r}
+inference = inferences_from_tosses(5, 7)
+plot_bayesian_inference(inference)
+```
+
