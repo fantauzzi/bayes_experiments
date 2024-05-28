@@ -75,3 +75,23 @@ inference = inferences_from_tosses(5, 7)
 plot_bayesian_inference(inference)
 ```
 
+```{r}
+p_grid = seq(from=0, to=1, length.out=50)
+prior = ifelse(p_grid<0.5, 0, 2)
+```
+
+```{r}
+inference = inferences_from_tosses(3, 3, prior=prior)
+the_plot = plot_bayesian_inference(inference)
+the_plot
+```
+
+```{r}
+inference = inferences_from_tosses(3, 4, prior=prior)
+plot_bayesian_inference(inference)
+```
+
+```{r}
+inference = inferences_from_tosses(5, 7, prior=prior)
+plot_bayesian_inference(inference)
+```
