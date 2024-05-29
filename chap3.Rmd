@@ -1,0 +1,228 @@
+```{r}
+library('rethinking')
+library(tidyverse)
+```
+
+
+```{r}
+p_grid = seq(from=0, to=1, length.out=1000)
+prob_p = rep(1, 1000)
+prob_data = dbinom(6, size=9, prob=p_grid)
+posterior = prob_data*prob_p
+posterior = posterior/sum(posterior)
+set.seed(100)
+n_samples = 1e4
+samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+```
+
+Check that the posterior is a possible probability mass function (note: the variable is discrete)
+
+```{r}
+sum(posterior) # Must be 1
+```
+
+```{r}
+plot(p_grid, posterior, main='Posterior prob. (grid approximate)')
+```
+
+```{r}
+dens(samples)
+```
+```{r}
+sum(posterior[p_grid<0.2])
+sum(samples<0.2)/n_samples
+```
+```{r}
+sum(posterior[p_grid>0.8])
+#sum(samples>0.8)/n_samples
+mean(samples > 0.8)
+```
+
+```{r}
+sum(posterior[0.2<p_grid & p_grid<0.8])
+sum(samples>0.2 & samples<0.8)/n_samples
+```
+```{r}
+mean(between(samples, 0.2, 0.8))
+```
+
+
+```{r}
+quantile(samples, .2)
+```
+
+```{r}
+quantile(samples, .8)
+```
+
+```{r}
+HPDI(samples, .66)
+```
+
+```{r}
+PI(samples, .66)
+```
+## 3M1
+
+Posterior distribution using grid approximation for 8 W globe tosses out of 15.
+
+```{r}
+p_grid = seq(from=0, to=1, length.out=1000)
+prob_p = rep(1, 1000)
+prob_data = dbinom(8, size=15, prob=p_grid)
+posterior = prob_data*prob_p
+posterior = posterior/sum(posterior)
+```
+
+```{r}
+plot(p_grid, posterior, main='Posterior prob. (grid approximate)')
+```
+
+
+## 3M2
+
+```{r}
+set.seed(100)
+n_samples = 1e4
+samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+HPDI(samples, .90)
+```
+```{r}
+dens(samples)
+```
+
+```{r}
+post_predictions = rbinom(10000, size=15, prob=samples)
+sum(post_predictions == 8)/length(post_predictions)
+mean(post_predictions == 8)
+```
+
+##############################################################
+
+## 3M1
+
+Posterior distribution using grid approximation for 8 W globe tosses out of 15.
+
+```{r}
+p_grid = seq(from=0, to=1, length.out=1000)
+prob_p = ifelse(p_grid<0.5, 0, 2)
+prob_data = dbinom(6, size=9, prob=p_grid)
+posterior = prob_data*prob_p
+posterior = posterior/sum(posterior)
+```
+
+```{r}
+plot(p_grid, posterior, main='Posterior prob. (grid approximate)')
+```
+
+
+## 3M2
+
+```{r}
+set.seed(100)
+n_samples = 1e4
+samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+HPDI(samples, .90)
+```
+
+```{r}
+post_predictions = rbinom(10000, size=15, prob=samples)
+sum(post_predictions == 8)/length(post_predictions)
+mean(post_predictions == 8)
+```
+```{r}
+data(homeworkch3)
+```
+
+# 3H1
+
+```{r}
+set.seed(100)
+p_grid = seq(from=0, to=1, length.out=1000)
+prior = rep(1, 1000)
+total_n_samples = length(birth1)+length(birth2)
+total_boys = sum(birth1)+sum(birth2)
+likelihood = dbinom(total_boys, size=total_n_samples, prob=p_grid)
+posterior = prior*likelihood
+posterior = posterior/sum(posterior)
+# n_samples = 1e4
+# samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+```
+
+```{r}
+plot(p_grid, posterior, main='Posterior prob. (grid approximate)')
+```
+
+The parameter value that maximises the posterior prob.
+```{r}
+p_grid[which.max(posterior)]
+```
+
+## 3H2
+
+```{r}
+n_samples = 1e4
+post_samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+```
+
+```{r}
+dens(post_samples)
+```
+
+
+```{r}
+HPDI(post_samples, .5)
+HPDI(post_samples, .89)
+HPDI(post_samples, .97)
+```
+```{r}
+# PPD stands for posterior predictive distribution
+ppd_samples = rbinom(n_samples, size=200, prob=post_samples) 
+```
+```{r}
+dens(ppd_samples)
+```
+
+Yes, the model fits the data well, as the observed value of 111 boys out of 200 births is a central, likely outcome in the empirical distribution of the posterio predictive distribution.
+
+## 3H4
+
+``` {r}
+set.seed(100)
+p_grid = seq(from=0, to=1, length.out=1000)
+prior = rep(1, 1000)
+n_samples_b1 = length(birth1)
+total_boys_b1 = sum(birth1)
+likelihood = dbinom(total_boys_b1, size=n_samples_b1, prob=p_grid)
+posterior = prior*likelihood
+posterior = posterior/sum(posterior)
+# n_samples = 1e4
+# samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+```
+
+
+```{r}
+plot(p_grid, posterior, main='Posterior prob. (grid approximate)')
+```
+The posterior probability distribution for the probability of males is centered close around .5, while considenring both the 1st and 2nd birth it was more shifted more toward 1 (to the right).
+
+
+## 3H5
+
+``` {r}
+set.seed(100)
+p_grid = seq(from=0, to=1, length.out=1000)
+prior = rep(1, 1000)
+n_samples = sum(birth1==0)
+n_boys_b2_after_girl_b1 = sum(birth2[birth1==0])
+likelihood = dbinom(n_boys_b2_after_girl_b1, size=n_samples, prob=p_grid)
+posterior = prior*likelihood
+posterior = posterior/sum(posterior)
+# n_samples = 1e4
+# samples = sample(p_grid, prob=posterior, size=n_samples, replace=T)
+```
+
+
+```{r}
+plot(p_grid, posterior, main='Posterior prob. (grid approximate)')
+```
