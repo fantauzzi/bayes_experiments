@@ -75,3 +75,122 @@ shade(height.PI, weight.seq)
 
 ```
 
+## 4E1
+
+The first line is the likelihood
+
+## 4E2
+
+There are two parameters in the posterior
+
+## 4E3
+
+$Pr(\mu, \sigma|y) = \frac{\prod_i Normal(y_i|\mu, \sigma)Normal(\mu|0, 10)Exponential(\sigma|1)}{\int \int \prod_i Normal(y_i|\mu, \sigma)Normal(\mu|0, 10)Exponential(\sigma|1) d\mu d\sigma}$
+
+## 4E4
+
+The 2nd line
+
+## 4E5
+
+There are three parameters, alpha, beta and sigma.
+
+## 4M1
+
+```{r}
+n_samples = 10000
+mu_samples = rnorm(n_samples, mean = 0, sd = 10)
+sigma_samples = rexp(n_samples, rate = 1)
+y_samples = rnorm(n_samples, mean = mu_samples, sd = sigma_samples)
+dens(y_samples)
+```
+
+
+## 4M2
+
+```{r}
+quap_f = alist(
+  h ~ dnorm(mu, sigma),
+  mu ~ dnorm(0, 10),
+  sigma ~ dexp(1)
+)
+```
+
+## 4M3
+
+$$
+\begin{align}
+& y_i = Normal(\mu, \sigma) \\
+& \mu = \alpha + \beta x_i \\
+& \alpha = Normal(0, 10) \\
+& \beta = Uniform(0,1) \\
+& \sigma = Exponential(1)
+& \end{align}
+$$
+
+## 4M4
+
+$$
+\begin{align}
+& h_i = Normal(\mu, \sigma) \\
+&\mu = alpha + \beta y_i \\
+&\alpha = Gamma(980, 1/7) \text{ Where the parameters are shape and theta respectively} \\
+&\beta = Gamma(4, 1.5) \\
+&\sigma = Exponential(1)
+\end{align}
+$$
+## 4M5
+
+No. 
+
+## 4M6
+
+I will chose a distribution for sigma that doesn't allow for values greater then 64.
+
+## 4H1
+
+```{r}
+library(rethinking)
+data(Howell1)
+d = Howell1
+d2 = d[d$age >= 18 , ]
+# define the average weight
+xbar = mean(d2$weight)
+m4.3 = quap(alist(
+  height ~ dnorm(mu , sigma) ,
+  mu <- a + b * (weight - xbar) ,
+  a ~ dnorm(178 , 20) ,
+  b ~ dlnorm(0 , 1) ,
+  sigma ~ dunif(0 , 50)
+) ,
+data = d2)
+```
+
+```{r}
+post_samples = extract.samples(m4.3)
+head(post_samples)
+```
+```{r}
+precis(m4.3)
+```
+```{r}
+weight = 46.95
+mu_preds = post_samples$a + post_samples$b*(weight-xbar)
+dens(mu_preds)
+```
+
+```{r}
+PI( mu_preds , prob=0.89 )
+```
+```{r}
+height_preds = rnorm(10000, mean=mu_preds, sd= post_samples$sigma)
+dens(height_preds)
+```
+```{r}
+precis(mu_preds)
+precis(height_preds)
+```
+```{r}
+PI( height_preds , prob=0.89 )
+```
+
