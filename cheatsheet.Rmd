@@ -1,0 +1,97 @@
+```{r}
+library(rethinking)
+```
+
+Load the data
+
+```{r}
+data(Howell1)
+d = Howell1
+```
+
+Get some quick info on the variables distribution
+
+```{r}
+precis(d)
+```
+Filter the data of interest (adhults only)
+```{r}
+d2 = d[d$age>=18,]
+```
+
+Make a simple model of the height variable, usign quadratic (Gaussian) approximation for the posteriors. 
+
+```{r}
+m4.1 = quap(alist(height ~ dnorm(mu, sigma), # Likelihood
+                  mu ~ dnorm(178, 20), # Prior
+                  sigma ~ dunif(0, 50)), # Prior
+            data = d2) # Observations
+
+```
+
+Display the parameters for the quadratic (Gaussian) approximation for each of the posterions (mu and sigma).
+The parameters are the columns mean and sd. Also display a 89% CI for each posterior.
+
+```{r}
+precis(m4.1)
+```
+Display the variance-covariance for the posterior. Along with the parameters above, it provides full information on the posterior obtained with quadratic approximation.
+```{r}
+vcov(m4.1)
+```
+
+From the variance-covariance, extract the vector of variances for the parameters and the correlation matrix
+
+```{r}
+diag(vcov(m4.1)) # Same as the square of the `sd` column in the output of precis()
+cov2cor(vcov(m4.1))
+```
+
+Make the same model, but provide a starting point for the iterative optimization process of the quadratic approximation
+
+```{r}
+start = list(mu = mean(d2$height), sigma = sd(d2$height))
+m4.1 = quap(alist(height ~ dnorm(mu, sigma), # Likelihood
+                  mu ~ dnorm(178, 20), # Prior
+                  sigma ~ dunif(0, 50)), # Prior
+            data = d2, # Observations
+            start = start) # Starting point
+```
+
+Extract a random sample from the posterior (note: the posterior is multivariate)
+
+```{r}
+post = extract.samples(m4.1, n=100)
+head(post)
+```
+Make a scatterplot of the samples
+
+```{r}
+plot(post)
+```
+
+A linear model of height as function of weight
+
+
+```{r}
+xbar = mean(d2$weight)
+m4.3 = quap(alist(height ~ dnorm(mu, sigma), # Likelihood
+                  mu <- a + b*(weight-xbar), # Linear model
+                  a ~ dnorm(178, 20), # Prior
+                  b ~ dlnorm(0, 1), # Prior
+                  sigma ~ dunif(0, 50)), # Prior
+            data = d2) # Observations
+
+```
+
+Summarize the marginal distributions of the parameters
+
+```{r}
+precis(m4.3)
+```
+Display the variance-covariance matrix for the fitted quadratic model
+
+```{r}
+round(vcov(m4.3),3)
+```
+

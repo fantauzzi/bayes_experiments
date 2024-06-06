@@ -245,4 +245,51 @@ mu.mean
 height.PI 
 ```
 
+## 4H2
+
+```{r}
+library(rethinking)
+data(Howell1)
+d = Howell1
+d2 = d[d$age < 18 , ]
+```
+```{r}
+precis(d2)
+```
+```{r}
+xbar = mean(d2$weight)
+m4.3b = quap(alist(
+  height ~ dnorm(mu , sigma) ,
+  mu <- a + b * (weight - xbar) ,
+  a ~ dnorm(178 , 20) ,
+  b ~ dlnorm(0 , 1) ,
+  sigma ~ dunif(0 , 50)
+) ,
+data = d2)
+```
+```{r}
+precis(m4.3b)
+```
+## a
+
+For every 10 units of increa in weight, the predicted increas in tallness is, on average, 27.2
+
+## b
+
+```{r}
+weight.seq = seq( from=25 , to=70 , by=1 )
+sim.height <- sim( m4.3b , data=list(weight=weight.seq) )
+height.PI <- apply( sim.height , 2 , PI , prob=0.89 )
+```
+```{r}
+# plot raw data
+plot( height ~ weight , d2 , col=col.alpha(rangi2,0.5) )
+# draw MAP line
+lines( weight.seq , mu.mean )
+# draw HPDI region for line
+shade( mu.PI , weight.seq )
+# draw PI region for simulated heights
+shade( height.PI , weight.seq )
+```
+
 
